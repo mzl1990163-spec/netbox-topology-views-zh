@@ -29,8 +29,8 @@ docker compose exec -T postgres sh -c 'psql -U netbox -d netbox -c "DROP SCHEMA 
 echo "==> [3/4] 恢复备份: $DUMP"
 docker compose exec -T postgres sh -c 'psql -U netbox -d netbox' < "$DUMP"
 
-echo "==> [4/4] 启动 netbox"
-docker compose start netbox netbox-worker netbox-housekeeping
+echo "==> [4/4] 启动 netbox(用 up -d,确保读取最新的 netbox.env)"
+docker compose up -d netbox netbox-worker netbox-housekeeping
 
 echo ""
 echo "✅ 恢复完成!用源服务器的管理员账号登录即可。"

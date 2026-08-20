@@ -149,7 +149,7 @@ NetBox 用 `SECRET_KEY` 加密设备密码等敏感数据。新服务器的 `net
 > docker compose stop netbox netbox-worker netbox-housekeeping
 > docker compose exec -T postgres sh -c 'psql -U netbox -d netbox -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA IF NOT EXISTS public;"'
 > docker compose exec -T postgres sh -c 'psql -U netbox -d netbox' < netbox-dump.sql
-> docker compose start netbox netbox-worker netbox-housekeeping
+> docker compose up -d netbox netbox-worker netbox-housekeeping   # 用 up -d 而非 start,确保读取最新 netbox.env
 > ```
 
 ## 9. 排错速查
