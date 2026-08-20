@@ -129,13 +129,13 @@ cd /opt/netbox-docker
 docker compose exec postgres sh -c 'pg_dump -U netbox -d netbox' > netbox-dump.sql
 ```
 
-**第二步:在新服务器恢复**
+**第二步:在新服务器恢复(推荐用脚本)**
+
+仓库已提供 `deploy/restore-db.sh`,会自动停应用 → 清空 schema → 恢复 → 启动:
 
 ```bash
-cd /opt/netbox-docker
-# 把 netbox-dump.sql 放到本目录后执行:
-docker compose exec -T postgres sh -c 'psql -U netbox -d netbox' < netbox-dump.sql
-docker compose restart netbox
+cd 仓库根目录
+./deploy/restore-db.sh /path/to/netbox-dump.sql
 ```
 
 **关键:SECRET_KEY 必须一致**
@@ -143,6 +143,14 @@ docker compose restart netbox
 NetBox 用 `SECRET_KEY` 加密设备密码等敏感数据。新服务器的 `netbox.env` 里把 `SECRET_KEY` 设为与旧服务器**完全相同**的值,否则恢复后设备密码无法解密(显示为密文)。不要把这个值写进 git。
 
 > 注:导出文件里含设备密码等敏感数据(加密存储),请妥善保管,不要放入公开仓库。
+>
+> 手动恢复(不依赖脚本):
+> ```bash
+> docker compose stop netbox netbox-worker netbox-housekeeping
+> docker compose exec -T postgres sh -c 'psql -U netbox -d netbox -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA IF NOT EXISTS public;"'
+> docker compose exec -T postgres sh -c 'psql -U netbox -d netbox' < netbox-dump.sql
+> docker compose start netbox netbox-worker netbox-housekeeping
+> ```
 
 ## 9. 排错速查
 
