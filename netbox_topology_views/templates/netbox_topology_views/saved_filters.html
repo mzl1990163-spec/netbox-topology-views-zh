@@ -1,0 +1,54 @@
+{% extends 'base/layout.html' %}
+{% load helpers %}
+{% load static %}
+
+{% block title %}我的拓扑{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">我的拓扑</h2>
+      <a class="btn btn-outline-primary" href="{% url 'plugins:netbox_topology_views:home' %}">
+        <i class="mdi mdi-sitemap" aria-hidden="true"></i> 实时拓扑
+      </a>
+    </div>
+
+    {% if saved_filters %}
+    <div class="card">
+      <table class="table table-hover table-headings">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>描述</th>
+            <th class="text-end">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sf in saved_filters %}
+          <tr>
+            <td><strong>{{ sf.name }}</strong></td>
+            <td>{{ sf.description|default:"—" }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-primary" href="{% url 'plugins:netbox_topology_views:home' %}?filter_id={{ sf.pk }}">
+                <i class="mdi mdi-sitemap" aria-hidden="true"></i> 打开拓扑
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted mt-2 small">
+      共 {{ saved_filters|length }} 个已保存视图。点击"打开拓扑"即可加载对应视图(包含筛选条件与设备布局)。
+    </p>
+    {% else %}
+    <div class="alert alert-info">
+      暂无已保存的视图。请先在
+      <a href="{% url 'plugins:netbox_topology_views:home' %}">实时拓扑</a>
+      页面配置好过滤条件后,点击"保存过滤器"按钮创建,之后就会出现在这里。
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

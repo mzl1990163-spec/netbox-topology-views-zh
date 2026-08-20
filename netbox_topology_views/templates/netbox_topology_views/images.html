@@ -1,0 +1,96 @@
+{% extends 'base/layout.html' %}
+{% load buttons %}
+{% load render_table from django_tables2 %}
+{% load helpers %}
+{% load static %}
+
+{% block title %}图标配置{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'netbox_topology_views/css/app.css' %}">
+<style>
+  .icon-table td, .icon-table th { vertical-align: middle; }
+  .icon-btn { min-width: 96px; min-height: 64px; display: inline-flex; align-items: center; justify-content: center; }
+  .icon-btn img { max-width: 56px; max-height: 48px; object-fit: contain; }
+  .icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 10px; max-height: 320px; overflow-y: auto; width: 420px; }
+  .icon-grid img { width: 48px; height: 48px; object-fit: contain; cursor: pointer; border: 1px solid transparent; border-radius: 4px; padding: 2px; background: #fff; }
+  .icon-grid img:hover { border-color: #0b5fa8; background: #eef3fa; }
+  .icon-grid img.selected { border-color: #0b5fa8; background: rgba(11,95,168,.10); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- 图标上传 -->
+  <form id="image-upload-form" method="post" enctype="multipart/form-data" class="mb-3">
+    {% csrf_token %}
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span class="fw-bold">上传自定义图标:</span>
+          <input type="file" name="image" accept=".png,.svg,.jpg,.jpeg,.gif,.webp,.bmp" class="form-control" style="max-width:280px;" multiple required>
+          <select name="group" id="upload-group" class="form-select" style="width:200px;">
+            <option value="__new__">＋ 新建分组…</option>
+            <option value="内置" selected>内置</option>
+            {% for g in group_names %}{% if g != '内置' %}<option value="{{ g }}">{{ g }}</option>{% endif %}{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-success"><i class="mdi mdi-upload" aria-hidden="true"></i> 上传</button>
+          <span class="text-muted small">支持 png/svg/jpg/gif/webp/bmp,限 2MB/个</span>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- 角色图标配置列表 -->
+  <form id="images" class="card">
+    <div class="card-header"><strong>角色图标配置</strong></div>
+    <div class="card-body p-0">
+      <table class="table table-hover icon-table mb-0">
+        <thead>
+          <tr>
+            <th style="width:30%;">角色名称</th>
+            <th style="width:25%;">图标分组</th>
+            <th>图标(点击弹出选择)</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for role in roles %}
+        <tr>
+          <td class="fw-bold">{{ role.name }}</td>
+          <td>
+            <select class="form-select form-select-sm role-group-select" data-role="{{ role.id }}">
+              <option value="内置" {% if role.group == '内置' %}selected{% endif %}>内置</option>
+              {% for g in group_names %}{% if g != '内置' %}<option value="{{ g }}" {% if role.group == g %}selected{% endif %}>{{ g }}</option>{% endif %}{% endfor %}
+            </select>
+          </td>
+          <td>
+            <div class="dropdown">
+              <button type="button" class="btn btn-outline-secondary btn-sm icon-btn role-image-btn" data-role="{{ role.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                {% if role.image %}<img src="{{ role.image }}" alt="图标">{% else %}<span class="text-muted">选择图标</span>{% endif %}
+              </button>
+              <div class="dropdown-menu p-0 role-image-menu" data-role="{{ role.id }}" style="min-width: 440px;"></div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer d-flex justify-content-end">
+      <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save" aria-hidden="true"></i> 保存</button>
+    </div>
+  </form>
+
+  {% include 'netbox_topology_views/toasts.html' %}
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+  const basePath = '{{ basepath }}';
+  const IMAGE_GROUPS = {{ groups_json|safe }};
+  const ROLE_IMAGES = {{ roles_json|safe }};
+</script>
+<script src="{% static 'netbox_topology_views/js/images.js' %}?v=20260820d" defer></script>
+{% endblock %}

@@ -1,0 +1,14 @@
+# 与源服务器(10.168.1.14)相同:NetBox 4.6.8 + netbox-docker 5.0.2
+# 锁定基础镜像 tag,保证换服务器部署后环境一致
+FROM ghcr.io/netbox-community/netbox:v4.6.8-5.0.2
+
+# 插件源码
+COPY plugin-src/ /opt/netbox_topology_views/
+
+# 直接把插件的 JS/CSS/图标 COPY 到 NetBox 静态目录(避免 collectstatic 权限问题)
+COPY plugin-src/netbox_topology_views/static/netbox_topology_views/ /opt/netbox/netbox/static/netbox_topology_views/
+
+# 创建图标目录并安装插件
+RUN mkdir -p /opt/netbox/netbox/static/netbox_topology_views/img && \
+    uv pip install --python /opt/netbox/venv/bin/python3 --no-cache /opt/netbox_topology_views && \
+    rm -rf /opt/netbox_topology_views

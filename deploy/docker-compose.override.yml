@@ -1,0 +1,18 @@
+services:
+  netbox: &netbox
+    build:
+      context: .
+      dockerfile: Dockerfile-Plugins
+    ports:
+      - "8000:8080"   # 按需修改端口
+    volumes:
+      # 图标持久卷:网页上传的图标/分组存在这里,重建容器不丢
+      - ./icons:/opt/netbox/netbox/static/netbox_topology_views/img
+
+  netbox-worker:
+    <<: *netbox
+    ports: []
+
+  netbox-housekeeping:
+    <<: *netbox
+    ports: []
