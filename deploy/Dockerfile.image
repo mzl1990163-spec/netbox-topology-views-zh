@@ -1,12 +1,12 @@
 # 用于 GitHub Actions 构建 ghcr.io 镜像的 Dockerfile
 # 构建上下文 = 仓库根目录(注意与 netbox-docker 的 Dockerfile-Plugins 不同,
-# 这里是直接 COPY 仓库根目录下的 netbox_topology_views/)
+# 这里是直接 COPY 仓库根目录下的项目,含 setup.py)
 FROM ghcr.io/netbox-community/netbox:v4.6.8-5.0.2
 
-# 插件源码(仓库根目录下)
-COPY netbox_topology_views/ /opt/netbox_topology_views/
+# 整个项目(含 setup.py 与 netbox_topology_views/ 插件包)
+COPY . /opt/netbox_topology_views/
 
-# 静态文件(JS/CSS/图标)
+# 静态文件(JS/CSS/图标)直接进 NetBox 静态目录
 COPY netbox_topology_views/static/netbox_topology_views/ /opt/netbox/netbox/static/netbox_topology_views/
 
 # 安装插件
