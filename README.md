@@ -129,25 +129,36 @@ sudo wget -O configuration/extra.py \
 > # 应输出: PLUGINS = ["netbox_topology_views"]
 > ```
 
-### 第 4 步:启动
+### 第 4 步:启动(分步启动,不要一次性 up -d!)
+
+> **为什么分步**:netbox / worker / housekeeping 三个容器**同时**启动时会并发执行数据库迁移,互相冲突导致容器崩溃(报 `column ... already exists`)。正确做法是先起数据库,再让 netbox 独占跑迁移,最后起后台任务。
 
 ```bash
-sudo docker compose -f compose.image.yml up -d
-```
+# 4.1 先启动数据库和缓存
+sudo docker compose -f compose.image.yml up -d postgres redis redis-cache
 
-> **做什么**:Docker 读 `compose.image.yml`,从 ghcr.io 拉取镜像,启动 6 个容器:netbox(主服务,网页 8000 端口)、netbox-worker / netbox-housekeeping(后台任务)、postgres / redis / redis-cache(数据库和缓存)。`up -d` 表示后台运行。
-> **验证**(应看到 6 个容器都 Started):
-> ```bash
-> sudo docker compose -f compose.image.yml ps
-> ```
+# 4.2 等数据库就绪,再单独启动 netbox(独占执行数据库迁移)
+sleep 15
+sudo docker compose -f compose.image.yml up -d netbox
+
+# 4.3 等 netbox 就绪后(第 5 步确认看到 302 再执行),
+#     再启动两个后台任务容器(迁移已完成,不会再冲突)
+sudo docker compose -f compose.image.yml up -d netbox-worker netbox-housekeeping
+```
 
 ### 第 5 步:等 NetBox 就绪(约 1-2 分钟)
 
 ```bash
-curl -sI http://127.0.0.1:8000/ | head -1
+for i in $(seq 1 18); do
+  HTTP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/)
+  echo "$(date +%H:%M:%S) http=$HTTP"
+  [ "$HTTP" = "302" ] && break
+  sleep 10
+done
 ```
 
-> **期望输出**:`HTTP/1.1 302 Found`(NetBox 已就绪,把没登录的请求跳转到登录页)。
+> **期望输出**:最后一行 `http=302`(NetBox 已就绪,把没登录的请求跳转到登录页)。
+> 看到 302 后,回到第 4.3 步启动 worker 和 housekeeping。
 > 5 分钟还没就绪就看日志:
 > ```bash
 > sudo docker compose -f compose.image.yml logs netbox | tail -30
