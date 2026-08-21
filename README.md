@@ -125,31 +125,7 @@ echo 'PLUGINS = ["netbox_topology_views"]' | sudo tee configuration/plugins.py
 > # 应输出: PLUGINS = ["netbox_topology_views"]
 > ```
 
-### 第 4 步:设置 SECRET_KEY
-
-```bash
-sudo vim compose.image.yml
-```
-
-在文件里找到这一行,把引号里的内容改掉:
-
-```yaml
-SECRET_KEY: "改成与源服务器一致的SECRET_KEY"
-```
-
-**SECRET_KEY 是什么**:NetBox 在保存设备密码等敏感信息前,会用这把"钥匙"加密。第 4 步就是在这台服务器上**设置这把钥匙**,NetBox 第一次启动后就用它加密。
-
-**怎么填**:
-- **全新部署(推荐)**:随便生成一串随机字符填进去(下面命令生成一个):
-  ```bash
-  openssl rand -base64 50
-  ```
-  把输出粘贴到引号里。
-- **以后要从别的服务器搬数据时**:必须填那台服务器的同一个 `SECRET_KEY`(在它 `/opt/netbox-docker/netbox.env` 的 `SECRET_KEY=...` 里),否则搬过来的密码解不开。
-
-改完保存退出(vim 里:按 `Esc` → 输入 `:wq` → 回车)。
-
-### 第 5 步:启动
+### 第 4 步:启动
 
 ```bash
 sudo docker compose -f compose.image.yml up -d
@@ -161,7 +137,7 @@ sudo docker compose -f compose.image.yml up -d
 > sudo docker compose -f compose.image.yml ps
 > ```
 
-### 第 6 步:等 NetBox 就绪(约 1-2 分钟)
+### 第 5 步:等 NetBox 就绪(约 1-2 分钟)
 
 ```bash
 curl -sI http://127.0.0.1:8000/ | head -1
@@ -173,7 +149,7 @@ curl -sI http://127.0.0.1:8000/ | head -1
 > sudo docker compose -f compose.image.yml logs netbox | tail -30
 > ```
 
-### 第 7 步:填充图标(首次部署必须执行!)
+### 第 6 步:填充图标(首次部署必须执行!)
 
 ```bash
 sudo docker compose -f compose.image.yml exec netbox \
@@ -183,7 +159,7 @@ sudo docker compose -f compose.image.yml exec netbox \
 > **做什么**:NetBox 启动时不会自动把插件的 256 个图标复制到图标卷(已知限制),这条命令手动把镜像里的图标"铺"到图标卷。
 > **期望输出**:`N static files copied`(`N` 大约 300+,含 256 个图标)。
 
-### 第 8 步:验证
+### 第 7 步:验证
 
 ```bash
 # 图标卷应有 57 个内置图标 + 8 个分组目录
@@ -194,7 +170,7 @@ sudo ls -d /opt/my-netbox/icons/*/ | head
 sudo docker compose -f compose.image.yml ps
 ```
 
-### 第 9 步:浏览器访问
+### 第 8 步:浏览器访问
 
 打开 **`http://<服务器IP>:8000`**,登录:
 
@@ -212,7 +188,7 @@ sudo docker compose -f compose.image.yml ps
 - 检查容器是否都在 Up:`sudo docker compose -f compose.image.yml ps`
 
 **Q: 图标设置是空的(没有图标)**
-- 第 7 步的 `collectstatic` 没执行,再跑一次。
+- 第 6 步的 `collectstatic` 没执行,再跑一次。
 
 **Q: 想换端口(8000 → 别的)**
 - 编辑 `compose.image.yml` 里 `ports: - "8000:8080"`,改左边的 `8000`(右边的 8080 是容器内部端口,别动)。

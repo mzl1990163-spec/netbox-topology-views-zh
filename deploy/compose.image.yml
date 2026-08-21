@@ -4,11 +4,11 @@
 # 用法:
 #   1) 新建目录,把本文件放进去(或直接放仓库 deploy/ 同级)
 #   2) 新建 configuration/plugins.py(内容: PLUGINS = ["netbox_topology_views"])
-#   3) 改 SECRET_KEY(与源服务器一致,否则设备密码无法解密)
-#   4) docker compose -f compose.image.yml up -d
-#   5) 首次启动会自动:建库→迁移→collectstatic 填充图标(约 1-2 分钟)
+#   3) docker compose -f compose.image.yml up -d
+#   4) 首次启动自动建库+迁移(约 1-2 分钟);就绪后需手动执行一次 collectstatic 填充图标
 #
-# 注意:镜像公开,无需 docker login;图标持久化在 ./icons 卷
+# 注意:镜像公开,无需 docker login;图标持久化在 ./icons 卷;
+#       SECRET_KEY 已内置随机值,部署即用(如需恢复源服务器数据,请改为与源服务器一致)
 # ============================================================
 services:
   netbox: &netbox
@@ -19,7 +19,7 @@ services:
       - "./icons:/opt/netbox/netbox/static/netbox_topology_views/img"
       - "./configuration/plugins.py:/etc/netbox/config/plugins.py:ro"
     environment:
-      SECRET_KEY: "改成与源服务器一致的SECRET_KEY"   # 必须与源服务器(数据来源)一致
+      SECRET_KEY: "zpEnXrvbqX6CzyVWRHRJ300T7v/l9qKG4VugY7lx3wQ8D+7uDEzhgQaVSNmMHMw/9uk="   # 已内置随机值,部署即用;如需恢复源服务器数据,请改为与源服务器一致
       DB_NAME: netbox
       DB_USER: netbox
       DB_PASSWORD: netbox
