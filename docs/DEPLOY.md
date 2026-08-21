@@ -21,21 +21,21 @@
 
 镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。
 
-> **新手必看**:第一次接触本项目的话,先看 [QUICKSTART.md](QUICKSTART.md) —— 那里有"这些文件是哪来的、每条命令在做什么、为什么这么做"的完整说明,适合零基础照着敲。本节是给有经验的人快速参考的。
+> **新手必看**:第一次接触本项目的话,先看 [README 的「快速部署」章节](../README.md#快速部署镜像版-v101) —— 那里有"这些文件是哪来的、每条命令在做什么、为什么这么做"的完整说明,适合零基础照着敲。本节是给有经验的人快速参考的。
 
-**命令版教程见 [QUICKSTART.md](QUICKSTART.md)**。步骤概要:
+**命令版教程见 [README「快速部署」章节](../README.md#快速部署镜像版-v101)**。步骤概要:
 
 ```bash
 # 1) 新建目录,放入仓库的 deploy/compose.image.yml
-mkdir -p mynetbox/configuration
-cp deploy/compose.image.yml mynetbox/
-echo 'PLUGINS = ["netbox_topology_views"]' > mynetbox/configuration/plugins.py
+mkdir -p my-netbox/configuration
+cp deploy/compose.image.yml my-netbox/
+echo 'PLUGINS = ["netbox_topology_views"]' > my-netbox/configuration/plugins.py
 
-# 2) 编辑 mynetbox/compose.image.yml:把 SECRET_KEY 改成与源服务器一致
-nano mynetbox/compose.image.yml
+# 2) 编辑 my-netbox/compose.image.yml:把 SECRET_KEY 改成你自己的值
+vim my-netbox/compose.image.yml
 
 # 3) 启动(镜像公开,免登录;非 root 用户加 sudo)
-cd mynetbox
+cd my-netbox
 sudo docker compose -f compose.image.yml up -d
 
 # 4) 等待就绪(约 1-2 分钟)

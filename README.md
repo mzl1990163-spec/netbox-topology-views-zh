@@ -44,54 +44,195 @@ img/
 
 > 根目录即「内置」分组;每个子目录对应一个自定义分组。网页新建分组 = 在该目录下创建子目录。
 
-## 安装部署
+---
 
-### 方式一:镜像部署(推荐,一步到位)
+# 快速部署(镜像版 v1.0.1)
 
-镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。
+> 给**第一次接触本项目的人**。按下面命令一条条执行,全程约 5 分钟,不需要懂 NetBox 源码或插件开发。
 
-> **第一次接触本项目?** 强烈建议先看 **[docs/QUICKSTART.md](docs/QUICKSTART.md)**,里面详细解释每个文件从哪来、每条命令做什么、为什么这么做,适合零基础照着敲。
+## 这是什么
 
-**完整命令版教程见 [docs/QUICKSTART.md](docs/QUICKSTART.md)**。步骤概要:
+本项目把以下三样东西打包成了一个 Docker 镜像,直接拉来用:
 
-1. 新建目录,把仓库里的 **`deploy/compose.image.yml`** 复制进去(已包含 netbox / postgres / redis 全部服务和环境变量);
-2. 编辑 `compose.image.yml`,把 **`SECRET_KEY`** 改成与源服务器一致(否则设备密码无法解密);
-3. 启动:
+| 内容 | 说明 |
+|------|------|
+| **NetBox 4.6.8** | 网络设备管理平台(开源) |
+| **拓扑插件 `netbox_topology_views`(中文汉化版)** | 从 NetBox 的设备 + 线缆自动生成网络拓扑图,并提供「我的拓扑」「图标设置」等中文功能 |
+| **8 组共 256 个华三(H3C)网络设备图标** + 49 个默认图标 | 给"交换机 / 路由器 / 防火墙 / AP / 服务器"等角色用 |
+
+打包好的镜像地址(公开,免登录):`ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1`
+
+## 部署文件从哪来
+
+部署只需要 2 个小文件,**都不用自己写**:
+
+| 文件 | 从哪来 | 干什么 |
+|------|------|------|
+| `compose.image.yml` | 本项目仓库的 `deploy/` 目录(下面用 wget 直接下载) | Docker 编排文件:告诉 Docker 用什么镜像、什么端口、什么环境变量 |
+| `configuration/plugins.py` | 自己创建(下面有一行命令) | 一行配置 `PLUGINS = ["netbox_topology_views"]`,意思是"启用这个插件" |
+
+> `netbox_topology_views` 是**这个插件的名字**。
+
+部署时 Docker 会自动从 **ghcr.io(GitHub 容器镜像仓库)** 拉取打包好的镜像(里面有 NetBox + 插件 + 256 图标),**不用拉源码、不用自己构建**。
+
+## 准备
+
+- 一台 **Ubuntu 22.04 / 24.04** 服务器,有 **sudo** 权限
+- 能访问 **GitHub** 和 **ghcr.io**(都是公开的,免登录)
+
+## 部署步骤(一条一条执行)
+
+### 第 1 步:安装 Docker
 
 ```bash
-docker compose -f compose.image.yml up -d
+sudo apt update
+sudo apt install -y docker.io docker-compose-v2 git
+sudo systemctl enable --now docker
 ```
 
-4. 等 1~2 分钟(首次自动建库、迁移),**再执行一次 collectstatic 填充图标**:
+> **做什么**:装 Docker 引擎(跑容器)和 Docker Compose v2(编排多个容器)。
+> **验证**:
+> ```bash
+> docker --version        # 应显示版本号
+> docker compose version
+> ```
+
+### 第 2 步:创建部署目录
 
 ```bash
-docker compose -f compose.image.yml exec netbox python3 /opt/netbox/netbox/manage.py collectstatic --no-input
+sudo mkdir -p /opt/my-netbox/configuration
+cd /opt/my-netbox
 ```
 
-5. 访问 `http://<服务器IP>:8000` 即可(登录 admin / 123456)。
+> **做什么**:在服务器上建一个工作目录,放部署文件。`/opt/my-netbox` 是项目名(可改成你喜欢的名字,保持后续命令一致即可)。
 
-> 镜像公开、免登录;上传的图标自动持久化到 `./icons` 卷;更新版本只需改 `image:` 的 tag 再 `up -d`。
+### 第 3 步:下载 / 创建部署文件
 
-### 方式二:源码部署(自行构建,备选)
+```bash
+# 从本项目 GitHub 仓库下载 compose 文件
+sudo wget -O compose.image.yml \
+  https://raw.githubusercontent.com/mzl1990163-spec/netbox-topology-views-zh/main/deploy/compose.image.yml
+
+# 创建插件启用配置(就一行:启用 netbox_topology_views 插件)
+echo 'PLUGINS = ["netbox_topology_views"]' | sudo tee configuration/plugins.py
+```
+
+> **验证**:
+> ```bash
+> ls -la /opt/my-netbox/
+> # 应有: compose.image.yml 和 configuration/ 目录
+> cat /opt/my-netbox/configuration/plugins.py
+> # 应输出: PLUGINS = ["netbox_topology_views"]
+> ```
+
+### 第 4 步:设置 SECRET_KEY
+
+```bash
+sudo vim compose.image.yml
+```
+
+在文件里找到这一行,把引号里的内容改掉:
+
+```yaml
+SECRET_KEY: "改成与源服务器一致的SECRET_KEY"
+```
+
+**SECRET_KEY 是什么**:NetBox 在保存设备密码等敏感信息前,会用这把"钥匙"加密。第 4 步就是在这台服务器上**设置这把钥匙**,NetBox 第一次启动后就用它加密。
+
+**怎么填**:
+- **全新部署(推荐)**:随便生成一串随机字符填进去(下面命令生成一个):
+  ```bash
+  openssl rand -base64 50
+  ```
+  把输出粘贴到引号里。
+- **以后要从别的服务器搬数据时**:必须填那台服务器的同一个 `SECRET_KEY`(在它 `/opt/netbox-docker/netbox.env` 的 `SECRET_KEY=...` 里),否则搬过来的密码解不开。
+
+改完保存退出(vim 里:按 `Esc` → 输入 `:wq` → 回车)。
+
+### 第 5 步:启动
+
+```bash
+sudo docker compose -f compose.image.yml up -d
+```
+
+> **做什么**:Docker 读 `compose.image.yml`,从 ghcr.io 拉取镜像,启动 6 个容器:netbox(主服务,网页 8000 端口)、netbox-worker / netbox-housekeeping(后台任务)、postgres / redis / redis-cache(数据库和缓存)。`up -d` 表示后台运行。
+> **验证**(应看到 6 个容器都 Started):
+> ```bash
+> sudo docker compose -f compose.image.yml ps
+> ```
+
+### 第 6 步:等 NetBox 就绪(约 1-2 分钟)
+
+```bash
+curl -sI http://127.0.0.1:8000/ | head -1
+```
+
+> **期望输出**:`HTTP/1.1 302 Found`(NetBox 已就绪,把没登录的请求跳转到登录页)。
+> 5 分钟还没就绪就看日志:
+> ```bash
+> sudo docker compose -f compose.image.yml logs netbox | tail -30
+> ```
+
+### 第 7 步:填充图标(首次部署必须执行!)
+
+```bash
+sudo docker compose -f compose.image.yml exec netbox \
+  python3 /opt/netbox/netbox/manage.py collectstatic --no-input
+```
+
+> **做什么**:NetBox 启动时不会自动把插件的 256 个图标复制到图标卷(已知限制),这条命令手动把镜像里的图标"铺"到图标卷。
+> **期望输出**:`N static files copied`(`N` 大约 300+,含 256 个图标)。
+
+### 第 8 步:验证
+
+```bash
+# 图标卷应有 57 个内置图标 + 8 个分组目录
+sudo ls /opt/my-netbox/icons/ | head
+sudo ls -d /opt/my-netbox/icons/*/ | head
+
+# 所有 6 个容器都应 Up
+sudo docker compose -f compose.image.yml ps
+```
+
+### 第 9 步:浏览器访问
+
+打开 **`http://<服务器IP>:8000`**,登录:
+
+- 账号:**`admin`**
+- 密码:**`123456`**
+
+进去后:
+- 顶部应有 **「拓扑」** 菜单(含「实时拓扑」「我的拓扑」)
+- 「偏好设置 → 图标设置」应有 **8 个分组共 256 个华三图标** —— 部署成功
+
+## 常见问题
+
+**Q: 浏览器打不开 8000 端口**
+- 检查防火墙:`sudo ufw allow 8000`
+- 检查容器是否都在 Up:`sudo docker compose -f compose.image.yml ps`
+
+**Q: 图标设置是空的(没有图标)**
+- 第 7 步的 `collectstatic` 没执行,再跑一次。
+
+**Q: 想换端口(8000 → 别的)**
+- 编辑 `compose.image.yml` 里 `ports: - "8000:8080"`,改左边的 `8000`(右边的 8080 是容器内部端口,别动)。
+
+**Q: 以后更新版本(如 1.0.1 → 1.0.2)**
+- 编辑 `compose.image.yml`,把 `image:` 末尾的 `1.0.1` 改成新版本号
+- `sudo docker compose -f compose.image.yml up -d`
+
+**Q: 出错了怎么看日志**
+```bash
+sudo docker compose -f compose.image.yml logs netbox | tail -50
+```
+
+## 源码部署(备选,自行构建)
 
 适合想自己构建镜像的场景,详细步骤见 [docs/DEPLOY.md](docs/DEPLOY.md)。仓库 `deploy/` 已提供现成文件:
 
 - `deploy.sh` — 一键脚本(克隆 netbox-docker → 放插件 → 构建 → 启动)
 - `Dockerfile-Plugins` — 锁定基础镜像 `ghcr.io/netbox-community/netbox:v4.6.8-5.0.2`
 - `docker-compose.override.yml` — icons 持久卷挂载
-
-首次部署后若图标未自动填充,手动执行:
-
-```bash
-sudo docker exec <netbox容器名> python3 manage.py collectstatic --no-input
-```
-
-## 常见问题
-
-- **拓扑只显示连线不显示设备**:多为图标 404 或设备无坐标。检查 `img` 目录是否存在图标、`collectstatic` 是否执行,并给设备补充坐标。
-- **新建分组刷新后看不到**:本版已修复(空分组也会列出)。上传图标后即可在分组中看到。
-- **改了代码不生效**:`plugin-src` 在构建镜像时打进镜像,**必须重新 `docker compose build netbox` 并 `up -d`**,仅重启容器不会生效。
-- **图标命名**:建议 `分组名-NN`(如 `Switch-01`),序号连续、易管理。
 
 ## License
 
