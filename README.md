@@ -162,7 +162,7 @@ done
 **验证方式 2:看日志(出现类似内容且没有报错,说明启动成功)**
 
 ```bash
-sudo docker compose -f compose.image.yml logs netbox | tail -30
+docker logs -f my-netbox-netbox-1
 ```
 
 > 看到类似:
