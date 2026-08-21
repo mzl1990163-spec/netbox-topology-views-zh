@@ -1,0 +1,59 @@
+# ============================================================
+# 镜像版一键部署(v2.0):NetBox 4.6.8 + 插件 + 256 图标
+#
+# 用法:
+#   1) 新建目录,把本文件放进去(或直接放仓库 deploy/ 同级)
+#   2) 新建 configuration/plugins.py(内容: PLUGINS = ["netbox_topology_views"])
+#   3) 改 SECRET_KEY(与源服务器一致,否则设备密码无法解密)
+#   4) docker compose -f compose.image.yml up -d
+#   5) 首次启动会自动:建库→迁移→collectstatic 填充图标(约 1-2 分钟)
+#
+# 注意:镜像公开,无需 docker login;图标持久化在 ./icons 卷
+# ============================================================
+services:
+  netbox: &netbox
+    image: ghcr.io/mzl1990163-spec/netbox-topology-views-zh:2.0
+    ports:
+      - "8000:8080"
+    volumes:
+      - "./icons:/opt/netbox/netbox/static/netbox_topology_views/img"
+      - "./configuration/plugins.py:/etc/netbox/config/plugins.py:ro"
+    environment:
+      SECRET_KEY: "改成与源服务器一致的SECRET_KEY"   # 必须与源服务器(数据来源)一致
+      DB_NAME: netbox
+      DB_USER: netbox
+      DB_PASSWORD: netbox
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_CACHE_HOST: redis-cache
+      REDIS_CACHE_PORT: "6379"
+      SUPERUSER_USERNAME: admin
+      SUPERUSER_PASSWORD: "123456"
+      SUPERUSER_EMAIL: "admin@example.com"
+  netbox-worker:
+    <<: *netbox
+    ports: []
+  netbox-housekeeping:
+    <<: *netbox
+    ports: []
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: "netbox"
+      POSTGRES_DB: netbox
+      POSTGRES_USER: netbox
+    volumes:
+      - netbox-postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    command: ["sh", "-c", "redis-server --appendonly yes"]
+
+  redis-cache:
+    image: redis:6-alpine
+
+volumes:
+  netbox-postgres:

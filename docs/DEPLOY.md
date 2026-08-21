@@ -17,6 +17,32 @@
 >
 > 以下为手动步骤说明。
 
+## 0.5 镜像部署(v2.0,推荐,不用构建)
+
+镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:2.0` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。部署只需一个 compose 文件:
+
+```bash
+# 1) 新建目录,放入仓库的 deploy/compose.image.yml
+#    (含 netbox/postgres/redis 全部服务 + 环境变量)
+mkdir -p mynetbox/configuration
+cp deploy/compose.image.yml mynetbox/
+echo 'PLUGINS = ["netbox_topology_views"]' > mynetbox/configuration/plugins.py
+
+# 2) 编辑 mynetbox/compose.image.yml:把 SECRET_KEY 改成与源服务器一致
+nano mynetbox/compose.image.yml
+
+# 3) 启动(镜像公开,免登录;首次启动自动建库+迁移+填充图标,约 1-2 分钟)
+cd mynetbox
+docker compose -f compose.image.yml up -d
+
+# 4) 访问 http://<IP>:8000,登录 admin / 123456(或恢复数据后用源服务器账号)
+```
+
+> - 镜像已启用插件,无需再手动挂 plugins.py;compose 仍挂载它,方便你用自定义配置覆盖。
+> - 图标会自动 collectstatic 到 `./icons` 卷(持久化)。
+> - 更新版本:改 compose 里 `image:` 的 tag(如 `:2.0` → `:latest`)再 `up -d`。
+> - 如需与源服务器数据一致,恢复数据库(见 8.1 节)。
+
 ## 1. 放置插件源码
 
 把本仓库的 `netbox_topology_views/` 目录放到 netbox-docker 的 `plugin-src/` 下:

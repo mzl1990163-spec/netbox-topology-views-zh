@@ -13,3 +13,6 @@ COPY netbox_topology_views/static/netbox_topology_views/ /opt/netbox/netbox/stat
 RUN mkdir -p /opt/netbox/netbox/static/netbox_topology_views/img && \
     uv pip install --python /opt/netbox/venv/bin/python3 --no-cache /opt/netbox_topology_views && \
     rm -rf /opt/netbox_topology_views
+
+# 启用插件(写入 NetBox 插件配置;若部署时挂载了自定义 plugins.py 会覆盖此文件)
+RUN echo 'PLUGINS = ["netbox_topology_views"]' > /etc/netbox/config/plugins.py
