@@ -131,22 +131,22 @@ sudo wget -O configuration/extra.py \
 
 ### 第 4 步:启动(分步启动,不要一次性 up -d!)
 
-> **为什么分步**:netbox / worker / housekeeping 三个容器**同时**启动时会并发执行数据库迁移,互相冲突导致容器崩溃(报 `column ... already exists`)。正确做法是先起数据库,再让 netbox 独占跑迁移,最后起后台任务。
+> **为什么分步**:netbox / worker / housekeeping 三个容器**同时**启动时会并发执行数据库迁移,互相冲突导致容器崩溃(报 `column ... already exists`)。所以分三步启动。
+
+**4.1 启动数据库和缓存,等待 15 秒**
 
 ```bash
-# 4.1 先启动数据库和缓存
 sudo docker compose -f compose.image.yml up -d postgres redis redis-cache
-
-# 4.2 等数据库就绪,再单独启动 netbox(独占执行数据库迁移)
 sleep 15
-sudo docker compose -f compose.image.yml up -d netbox
-
-# 4.3 等 netbox 就绪后(第 5 步确认看到 302 再执行),
-#     再启动两个后台任务容器(迁移已完成,不会再冲突)
-sudo docker compose -f compose.image.yml up -d netbox-worker netbox-housekeeping
 ```
 
-### 第 5 步:等 NetBox 就绪(约 1-2 分钟)
+**4.2 启动 netbox,并验证启动成功(两种验证方式二选一)**
+
+```bash
+sudo docker compose -f compose.image.yml up -d netbox
+```
+
+**验证方式 1:等 8000 端口返回 302**
 
 ```bash
 for i in $(seq 1 18); do
@@ -157,14 +157,33 @@ for i in $(seq 1 18); do
 done
 ```
 
-> **期望输出**:最后一行 `http=302`(NetBox 已就绪,把没登录的请求跳转到登录页)。
-> 看到 302 后,回到第 4.3 步启动 worker 和 housekeeping。
-> 5 分钟还没就绪就看日志:
-> ```bash
-> sudo docker compose -f compose.image.yml logs netbox | tail -30
-> ```
+> 最后一行出现 `http=302` 说明启动成功(NetBox 把未登录请求跳转到登录页)。
 
-### 第 6 步:填充图标(首次部署必须执行!)
+**验证方式 2:看日志(出现类似内容且没有报错,说明启动成功)**
+
+```bash
+sudo docker compose -f compose.image.yml logs netbox | tail -30
+```
+
+> 看到类似:
+> ```
+> [INFO] Started worker-4
+> [INFO] Started worker-1
+> [INFO] Started worker-2
+> [INFO] Started worker-3
+> ```
+> 且没有 `Traceback` / `Error` 报错,说明启动成功。
+
+**4.3 启动剩余两个后台任务容器,并验证 6 个容器**
+
+```bash
+sudo docker compose -f compose.image.yml up -d netbox-worker netbox-housekeeping
+sudo docker compose -f compose.image.yml ps
+```
+
+> 6 个容器都应显示 **Up**。
+
+### 第 5 步:填充图标(首次部署必须执行!)
 
 ```bash
 sudo docker compose -f compose.image.yml exec netbox \
@@ -174,7 +193,7 @@ sudo docker compose -f compose.image.yml exec netbox \
 > **做什么**:NetBox 启动时不会自动把插件的 256 个图标复制到图标卷(已知限制),这条命令手动把镜像里的图标"铺"到图标卷。
 > **期望输出**:`N static files copied`(`N` 大约 300+,含 256 个图标)。
 
-### 第 7 步:验证
+### 第 6 步:验证
 
 ```bash
 # 图标卷应有 57 个内置图标 + 8 个分组目录
@@ -185,7 +204,7 @@ sudo ls -d /opt/my-netbox/icons/*/ | head
 sudo docker compose -f compose.image.yml ps
 ```
 
-### 第 8 步:浏览器访问
+### 第 7 步:浏览器访问
 
 打开 **`http://<服务器IP>:8000`**,登录:
 
@@ -203,7 +222,7 @@ sudo docker compose -f compose.image.yml ps
 - 检查容器是否都在 Up:`sudo docker compose -f compose.image.yml ps`
 
 **Q: 图标设置是空的(没有图标)**
-- 第 6 步的 `collectstatic` 没执行,再跑一次。
+- 第 5 步的 `collectstatic` 没执行,再跑一次。
 
 **Q: 想换端口(8000 → 别的)**
 - 编辑 `compose.image.yml` 里 `ports: - "8000:8080"`,改左边的 `8000`(右边的 8080 是容器内部端口,别动)。
