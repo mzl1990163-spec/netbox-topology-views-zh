@@ -30,15 +30,15 @@ echo 'PLUGINS = ["netbox_topology_views"]' > mynetbox/configuration/plugins.py
 # 2) 编辑 mynetbox/compose.image.yml:把 SECRET_KEY 改成与源服务器一致
 nano mynetbox/compose.image.yml
 
-# 3) 启动(镜像公开,免登录)
+# 3) 启动(镜像公开,免登录;非 root 用户加 sudo)
 cd mynetbox
-docker compose -f compose.image.yml up -d
+sudo docker compose -f compose.image.yml up -d
 
 # 4) 等待就绪(约 1-2 分钟)
 curl -sI http://127.0.0.1:8000/ | head -1   # 期望 HTTP/1.1 302
 
 # 5) 填充图标(首次部署必须执行!)
-docker compose -f compose.image.yml exec netbox python3 /opt/netbox/netbox/manage.py collectstatic --no-input
+sudo docker compose -f compose.image.yml exec netbox python3 /opt/netbox/netbox/manage.py collectstatic --no-input
 
 # 6) 访问 http://<IP>:8000,登录 admin / 123456
 ```
