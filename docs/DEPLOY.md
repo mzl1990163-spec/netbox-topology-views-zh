@@ -19,7 +19,7 @@
 
 ## 0.5 镜像部署(v2.0,推荐,不用构建)
 
-镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:2.0` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。部署只需一个 compose 文件:
+镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。部署只需一个 compose 文件:
 
 ```bash
 # 1) 新建目录,放入仓库的 deploy/compose.image.yml

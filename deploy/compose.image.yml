@@ -12,7 +12,7 @@
 # ============================================================
 services:
   netbox: &netbox
-    image: ghcr.io/mzl1990163-spec/netbox-topology-views-zh:2.0
+    image: ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1
     ports:
       - "8000:8080"
     volumes:
