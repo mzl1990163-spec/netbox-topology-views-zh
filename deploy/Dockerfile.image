@@ -16,3 +16,6 @@ RUN mkdir -p /opt/netbox/netbox/static/netbox_topology_views/img && \
 
 # 启用插件(写入 NetBox 插件配置;若部署时挂载了自定义 plugins.py 会覆盖此文件)
 RUN echo 'PLUGINS = ["netbox_topology_views"]' > /etc/netbox/config/plugins.py
+
+# 菜单 UI 美化(一级菜单底色+横线,通过 BANNER_TOP 注入 CSS;若部署时挂载了自定义 extra.py 会覆盖此文件)
+COPY deploy/configuration/extra.py /etc/netbox/config/extra.py

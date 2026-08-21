@@ -3,7 +3,7 @@
 #
 # 用法:
 #   1) 新建目录,把本文件放进去(或直接放仓库 deploy/ 同级)
-#   2) 新建 configuration/plugins.py(内容: PLUGINS = ["netbox_topology_views"])
+#   2) 新建 configuration/ 目录,放入 plugins.py 和 extra.py(从仓库 deploy/configuration/ 复制)
 #   3) docker compose -f compose.image.yml up -d
 #   4) 首次启动自动建库+迁移(约 1-2 分钟);就绪后需手动执行一次 collectstatic 填充图标
 #
@@ -18,6 +18,7 @@ services:
     volumes:
       - "./icons:/opt/netbox/netbox/static/netbox_topology_views/img"
       - "./configuration/plugins.py:/etc/netbox/config/plugins.py:ro"
+      - "./configuration/extra.py:/etc/netbox/config/extra.py:ro"
     environment:
       SECRET_KEY: "zpEnXrvbqX6CzyVWRHRJ300T7v/l9qKG4VugY7lx3wQ8D+7uDEzhgQaVSNmMHMw/9uk="   # 已内置随机值,部署即用;如需恢复源服务器数据,请改为与源服务器一致
       DB_NAME: netbox
