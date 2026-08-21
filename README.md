@@ -46,29 +46,34 @@ img/
 
 ## 安装部署
 
-netbox-docker 部署的完整步骤见 **[docs/DEPLOY.md](docs/DEPLOY.md)**。
+### 方式一:镜像部署(推荐,一步到位)
 
-要点速览:
+镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。部署步骤:
+
+1. 新建目录,把仓库里的 **`deploy/compose.image.yml`** 复制进去(已包含 netbox / postgres / redis 全部服务和环境变量);
+2. 编辑 `compose.image.yml`,把 **`SECRET_KEY`** 改成与源服务器一致(否则设备密码无法解密);
+3. 启动:
 
 ```bash
-# 1. 将插件源码放入 netbox-docker 的 plugin-src/netbox_topology_views/
-# 2. Dockerfile-Plugins(构建插件镜像):
-#    FROM ghcr.io/netbox-community/netbox:latest
-#    COPY plugin-src/ /opt/netbox_topology_views/
-#    COPY plugin-src/netbox_topology_views/static/netbox_topology_views/ /opt/netbox/netbox/static/netbox_topology_views/
-#    RUN mkdir -p /opt/netbox/netbox/static/netbox_topology_views/img && uv pip install --python /opt/netbox/venv/bin/python3 --no-cache /opt/netbox_topology_views && rm -rf /opt/netbox_topology_views
-# 3. docker-compose.override.yml(挂载图标持久卷,重建容器不丢):
-#    volumes:
-#      - ./icons:/opt/netbox/netbox/static/netbox_topology_views/img
-# 4. configuration.py 的 PLUGINS 中加入 "netbox_topology_views"
-# 5. 构建并启动:
-#    docker compose build netbox && docker compose up -d netbox
+docker compose -f compose.image.yml up -d
 ```
 
-首次部署后,`collectstatic`(netbox-docker 启动时自动执行)会把镜像内图标写入 `/icons` 卷;若卷为空未自动填充,手动执行:
+4. 等 1~2 分钟(首次启动自动建库、迁移、填充图标),访问 `http://<服务器IP>:8000` 即可。
+
+> 镜像公开、免登录;图标自动持久化到 `./icons` 卷;更新版本只需改 `image:` 的 tag 再 `up -d`。完整说明见 [docs/DEPLOY.md](docs/DEPLOY.md) 第 0.5 节。
+
+### 方式二:源码部署(自行构建,备选)
+
+适合想自己构建镜像的场景,详细步骤见 [docs/DEPLOY.md](docs/DEPLOY.md)。仓库 `deploy/` 已提供现成文件:
+
+- `deploy.sh` — 一键脚本(克隆 netbox-docker → 放插件 → 构建 → 启动)
+- `Dockerfile-Plugins` — 锁定基础镜像 `ghcr.io/netbox-community/netbox:v4.6.8-5.0.2`
+- `docker-compose.override.yml` — icons 持久卷挂载
+
+首次部署后若图标未自动填充,手动执行:
 
 ```bash
-sudo docker exec netbox-docker-netbox-1 python3 manage.py collectstatic --no-input
+sudo docker exec <netbox容器名> python3 manage.py collectstatic --no-input
 ```
 
 ## 常见问题
