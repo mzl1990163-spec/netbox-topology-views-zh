@@ -19,7 +19,11 @@
 
 ## 0.5 镜像部署(v2.0,推荐,不用构建)
 
-镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。**命令版教程见 [QUICKSTART.md](QUICKSTART.md)**。步骤概要:
+镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。
+
+> **新手必看**:第一次接触本项目的话,先看 [QUICKSTART.md](QUICKSTART.md) —— 那里有"这些文件是哪来的、每条命令在做什么、为什么这么做"的完整说明,适合零基础照着敲。本节是给有经验的人快速参考的。
+
+**命令版教程见 [QUICKSTART.md](QUICKSTART.md)**。步骤概要:
 
 ```bash
 # 1) 新建目录,放入仓库的 deploy/compose.image.yml

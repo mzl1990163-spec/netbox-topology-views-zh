@@ -48,7 +48,11 @@ img/
 
 ### 方式一:镜像部署(推荐,一步到位)
 
-镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。**完整命令版教程见 [docs/QUICKSTART.md](docs/QUICKSTART.md)**(一条一条执行即可)。步骤概要:
+镜像 `ghcr.io/mzl1990163-spec/netbox-topology-views-zh:1.0.1` 已内置 NetBox 4.6.8 + 插件 + 256 图标,并已启用插件。
+
+> **第一次接触本项目?** 强烈建议先看 **[docs/QUICKSTART.md](docs/QUICKSTART.md)**,里面详细解释每个文件从哪来、每条命令做什么、为什么这么做,适合零基础照着敲。
+
+**完整命令版教程见 [docs/QUICKSTART.md](docs/QUICKSTART.md)**。步骤概要:
 
 1. 新建目录,把仓库里的 **`deploy/compose.image.yml`** 复制进去(已包含 netbox / postgres / redis 全部服务和环境变量);
 2. 编辑 `compose.image.yml`,把 **`SECRET_KEY`** 改成与源服务器一致(否则设备密码无法解密);
