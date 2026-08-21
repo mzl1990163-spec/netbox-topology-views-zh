@@ -115,12 +115,16 @@ sudo wget -O compose.image.yml \
 
 # 创建插件启用配置(就一行:启用 netbox_topology_views 插件)
 echo 'PLUGINS = ["netbox_topology_views"]' | sudo tee configuration/plugins.py
+
+# 下载菜单美化配置(一级菜单底色+横线;镜像已内置,挂载是为了方便自定义)
+sudo wget -O configuration/extra.py \
+  https://raw.githubusercontent.com/mzl1990163-spec/netbox-topology-views-zh/main/deploy/configuration/extra.py
 ```
 
 > **验证**:
 > ```bash
-> ls -la /opt/my-netbox/
-> # 应有: compose.image.yml 和 configuration/ 目录
+> ls -la /opt/my-netbox/configuration/
+> # 应有: extra.py 和 plugins.py
 > cat /opt/my-netbox/configuration/plugins.py
 > # 应输出: PLUGINS = ["netbox_topology_views"]
 > ```
